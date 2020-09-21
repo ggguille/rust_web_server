@@ -17,20 +17,15 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 
     let get = b"GET / HTTP/1.1\r\n";
-    if buffer.starts_with(get) {
-        let contents = fs::read_to_string("res/hello.html").unwrap();
-        let response = format!(
-            "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-            contents.len(),
-            contents
-        );
-        stream.write(response.as_bytes()).unwrap();
-        stream.flush().unwrap();
+
+    let (status_line, filepath) = if buffer.starts_with(get) {
+        ("HTTP/1.1 200 OK\r\n\r\n", "res/hello.html")
     } else {
-        let status_line = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
-        let contents = fs::read_to_string("res/404.html").unwrap();
-        let response = format!("{}{}", status_line, contents);
-        stream.write(response.as_bytes()).unwrap();
-        stream.flush().unwrap();
-    }
+        ("HTTP/1.1 404 NOT FOUND\r\n\r\n", "res/404.html")
+    };
+
+    let contents = fs::read_to_string(filepath).unwrap();
+    let response = format!("{}{}", status_line, contents);
+    stream.write(response.as_bytes()).unwrap();
+    stream.flush().unwrap();
 }
